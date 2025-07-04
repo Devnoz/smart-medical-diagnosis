@@ -1,3 +1,71 @@
+# AI Doctor
+
+AI Doctor is a modern web application that uses AI to analyze uploaded skin images and user-recorded symptoms, providing instant medical insights and solutions. Built with Next.js (frontend) and FastAPI (backend), it features a clean, responsive UI, drag-and-drop image upload, and audio playback for both user and AI responses.
+
+## Features
+- Upload a skin image for instant AI diagnosis
+- Record and play back your symptoms (voice)
+- Receive AI-generated solutions and audio responses
+- Modern, medical-themed, responsive UI
+- Fast, private, and easy to use
+
+## Tech Stack
+- **Frontend:** Next.js, React, Tailwind CSS
+- **Backend:** FastAPI, Python
+
+## Getting Started
+
+### Prerequisites
+- Node.js (v18+ recommended)
+- Python 3.8+
+- [pnpm](https://pnpm.io/) (for frontend)
+
+### Backend Setup
+1. Navigate to the backend directory:
+   ```sh
+   cd ai-doctor-2.0-voice-and-vision
+   ```
+2. Install Python dependencies:
+   ```sh
+   pip install -r requirements.txt
+   ```
+3. Start the FastAPI server:
+   ```sh
+   uvicorn main:app --reload
+   ```
+
+### Frontend Setup
+1. Navigate to the frontend directory:
+   ```sh
+   cd ai-doctor-2.0-voice-and-vision/frontend
+   ```
+2. Install dependencies:
+   ```sh
+   pnpm install
+   ```
+3. Start the Next.js development server:
+   ```sh
+   pnpm dev
+   ```
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Usage
+1. Click **Start Diagnosis**.
+2. Upload a clear image of the affected skin area.
+3. (Optional) Record your symptoms using the voice recorder.
+4. Click **Get Diagnosis** to receive instant AI results and solutions.
+5. Listen to both your recorded audio and the AI's audio response.
+
+## Disclaimer
+This AI diagnosis is for informational purposes only and does not replace professional medical advice. Always consult a healthcare professional for serious or urgent concerns.
+
+## License
+MIT License
+
+---
+
+© 2025 AI Doctor. All rights reserved.
+
 # Project Setup Guide
 
 This guide provides step-by-step instructions to set up your project environment, including the installation of FFmpeg and PortAudio across macOS, Linux, and Windows, as well as setting up a Python virtual environment using Pipenv, pip, or conda.
