@@ -69,8 +69,19 @@ export default function App() {
         method: "POST",
         body: formData,
       });
+<<<<<<< HEAD
       if (!res.ok) throw new Error("API error");
       const data = await res.json();
+=======
+      if (!res.ok) throw new Error("API error: " + res.status + " " + res.statusText);
+      const data = await res.json();
+      console.log("API response:", data); // Debug log
+      if (data.error) {
+        setError(`Backend error: ${data.error}`);
+        setLoading(false);
+        return;
+      }
+>>>>>>> master
       setDiagnosis(data.result || "Unknown");
       setConfidence(data.confidence || 95); // Placeholder
       setSolution(data.solution || data.result || "No solution provided.");
@@ -83,7 +94,15 @@ export default function App() {
       }
       setPage("result");
     } catch (e) {
+<<<<<<< HEAD
       setError(e instanceof Error ? e.message : "Unknown error");
+=======
+      setError(
+        e instanceof Error
+          ? `Failed to contact diagnosis API. ${e.message}`
+          : "Unknown error contacting API."
+      );
+>>>>>>> master
     } finally {
       setLoading(false);
     }
@@ -124,7 +143,10 @@ export default function App() {
   // Audio recording state
   const [recording, setRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+<<<<<<< HEAD
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
+=======
+>>>>>>> master
   const [userAudio, setUserAudio] = useState<string | null>(null);
   const [recordError, setRecordError] = useState<string | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -152,7 +174,10 @@ export default function App() {
     if (recording) return; // Prevent double start
     setRecordError(null);
     setUserAudio(null);
+<<<<<<< HEAD
     setAudioChunks([]);
+=======
+>>>>>>> master
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaStreamRef.current = stream;
@@ -165,7 +190,10 @@ export default function App() {
       recorder.onstop = () => {
         const audioBlob = new Blob(chunks, { type: "audio/webm" });
         setUserAudio(URL.createObjectURL(audioBlob));
+<<<<<<< HEAD
         setAudioChunks([]);
+=======
+>>>>>>> master
         if (mediaStreamRef.current) {
           mediaStreamRef.current.getTracks().forEach((track) => track.stop());
           mediaStreamRef.current = null;
@@ -201,7 +229,10 @@ export default function App() {
   // Reset audio
   const handleResetAudio = () => {
     setUserAudio(null);
+<<<<<<< HEAD
     setAudioChunks([]);
+=======
+>>>>>>> master
     setRecordError(null);
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach((track) => track.stop());
