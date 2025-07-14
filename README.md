@@ -23,7 +23,6 @@ A modern web application that uses AI to analyze patient-uploaded skin images an
 | Audio      | AssemblyAI for transcription       |
 | Vision     | Roboflow hosted YOLOv8 model       |
 | Reasoning  | HuggingFace LLM (Mistral-7B)       |
-| DevOps     | Docker, CI/CD pipeline support     |
 
 ---
 
