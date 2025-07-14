@@ -35,16 +35,17 @@ A modern web application that uses AI to analyze patient-uploaded skin images an
 cd backend
 pip install -r requirements.txt
 uvicorn main:app --reload
+```
 Frontend Setup
-bash
-Copy
-Edit
+```bash
 cd frontend
 pnpm install
 pnpm dev
+```
 Visit http://localhost:3000 to interact with the app.
 
 🎯 Usage
+
 Click “Start Diagnosis”.
 
 Upload a clear image of the skin issue.
