@@ -1,8 +1,13 @@
-"\"use client"
+"use client"
 
-import type React from "react"
 import { useState, useRef, useCallback } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
@@ -18,7 +23,7 @@ import {
   AlertCircle,
   Eye,
   Activity,
-  Zap,
+  Zap
 } from "lucide-react"
 
 interface AnalysisResult {
@@ -67,9 +72,10 @@ export default function UnifiedAnalysis() {
         setImagePreview(e.target?.result as string)
       }
       reader.readAsDataURL(file)
-      // Reset previous results
+
       setAnalysisResult(null)
       setAudioBlob(null)
+      setRecordingTime(0)
     }
   }, [])
 
@@ -78,6 +84,7 @@ export default function UnifiedAnalysis() {
     setImagePreview("")
     setAnalysisResult(null)
     setAudioBlob(null)
+    setRecordingTime(0)
   }, [])
 
   const startRecording = useCallback(async () => {
@@ -91,9 +98,7 @@ export default function UnifiedAnalysis() {
       const mediaRecorder = new MediaRecorder(stream)
       const chunks: BlobPart[] = []
 
-      mediaRecorder.ondataavailable = (event) => {
-        chunks.push(event.data)
-      }
+      mediaRecorder.ondataavailable = (event) => chunks.push(event.data)
 
       mediaRecorder.onstop = () => {
         const blob = new Blob(chunks, { type: "audio/wav" })
@@ -119,7 +124,6 @@ export default function UnifiedAnalysis() {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop()
       setIsRecording(false)
-
       if (recordingIntervalRef.current) {
         clearInterval(recordingIntervalRef.current)
       }
@@ -144,7 +148,7 @@ export default function UnifiedAnalysis() {
 
       const response = await fetch("/api/analyze-unified", {
         method: "POST",
-        body: formData,
+        body: formData
       })
 
       setUploadProgress(75)
@@ -165,13 +169,10 @@ export default function UnifiedAnalysis() {
     }
   }, [selectedImage, audioBlob])
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, "0")}`
-  }
+  const formatTime = (seconds: number): string =>
+    `${Math.floor(seconds / 60)}:${(seconds % 60).toString().padStart(2, "0")}`
 
-  const getSeverityColor = (severity: string) => {
+  const getSeverityColor = (severity: string): string => {
     switch (severity.toLowerCase()) {
       case "low":
         return "bg-green-100 text-green-800"

@@ -1,13 +1,15 @@
-// File: app/api/analyze-unified/route.ts
-
 import { NextResponse } from "next/server";
 import axios from "axios";
+import FormData from "form-data";
+import { InferenceClient } from "@huggingface/inference";
 
 // === Environment variables ===
 const ASSEMBLYAI_API_KEY = process.env.ASSEMBLYAI_API_KEY!;
 const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY!;
-const ROBOFLOW_API = "https://serverless.roboflow.com/skin-lesion-detection-3iiut/1?api_key=x90BHkiM0wGExjL66flq"; // Replace with your actual model URL
-const HUGGINGFACE_API = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2";
+const HUGGINGFACE_MODEL = process.env.HUGGINGFACE_MODEL!;
+const ROBOFLOW_API = process.env.ROBOFLOW_API!;
+
+const hfClient = new InferenceClient(HUGGINGFACE_API_KEY);
 
 export async function POST(req: Request) {
   try {
@@ -42,7 +44,7 @@ export async function POST(req: Request) {
 
     const transcriptID = transcriptRes.data.id;
 
-    // === 3. Poll for Transcription Result (Up to 60 sec) ===
+    // === 3. Poll for Transcription Result ===
     let transcriptText = "";
     for (let i = 0; i < 20; i++) {
       const poll = await axios.get(`https://api.assemblyai.com/v2/transcript/${transcriptID}`, {
@@ -58,19 +60,29 @@ export async function POST(req: Request) {
         throw new Error(`AssemblyAI transcription failed: ${poll.data.error}`);
       }
 
-      await new Promise((res) => setTimeout(res, 3000));
+      await new Promise((res) => setTimeout(res, 1000));
     }
 
-    if (!transcriptText) throw new Error("Transcription failed or timed out.");
+    if (!transcriptText) {
+      throw new Error("Transcription failed or timed out.");
+    }
 
     // === 4. Analyze Image via Roboflow ===
-    const visionRes = await axios.post(ROBOFLOW_API, imageBuffer, {
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    const roboflowForm = new FormData();
+    roboflowForm.append("file", imageBuffer, {
+      filename: "image.jpg",
+      contentType: "image/jpeg",
+    });
+
+    const visionRes = await axios.post(ROBOFLOW_API, roboflowForm, {
+      headers: {
+        ...roboflowForm.getHeaders(),
+      },
     });
 
     const visualFindings = visionRes.data;
 
-    // === 5. Generate Summary with HuggingFace ===
+    // === 5. Generate Summary with HuggingFace ChatCompletion ===
     const prompt = `
 You are a medical AI assistant. Analyze the following:
 
@@ -91,16 +103,19 @@ Respond in JSON with:
 }
 `;
 
-    const aiRes = await axios.post(
-      HUGGINGFACE_API,
-      { inputs: prompt },
-      {
-        headers: { Authorization: `Bearer ${HUGGINGFACE_API_KEY}` },
-      }
-    );
+    const chatRes = await hfClient.chatCompletion({
+      model: HUGGINGFACE_MODEL,
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+    });
 
-    const outputText = aiRes.data[0]?.generated_text || "";
+    const outputText = chatRes.choices?.[0]?.message?.content || "";
 
+    // === 6. Parse the Response ===
     let parsed;
     try {
       const match = outputText.match(/```json\n([\s\S]*?)\n```/) || outputText.match(/\{[\s\S]*\}/);
@@ -110,7 +125,7 @@ Respond in JSON with:
         medical_assessment: {
           primary_diagnosis: "Fallback Summary",
           confidence_score: 0.75,
-          severity_level: "Moderate",
+          severity_level: "Moderate", // Always defined
           description: outputText.slice(0, 200) + "...",
         },
         visual_findings: {
@@ -132,6 +147,9 @@ Respond in JSON with:
     return NextResponse.json(parsed);
   } catch (error: any) {
     console.error("Unified analysis error:", error);
+    if (error.response) {
+      console.error("External API Error Response:", error.response.data);
+    }
     return NextResponse.json({ error: error.message || "Analysis failed" }, { status: 500 });
   }
 }
