@@ -172,18 +172,21 @@ export default function UnifiedAnalysis() {
   const formatTime = (seconds: number): string =>
     `${Math.floor(seconds / 60)}:${(seconds % 60).toString().padStart(2, "0")}`
 
-  const getSeverityColor = (severity: string): string => {
-    switch (severity.toLowerCase()) {
-      case "low":
-        return "bg-green-100 text-green-800"
-      case "moderate":
-        return "bg-yellow-100 text-yellow-800"
-      case "high":
-        return "bg-red-100 text-red-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
+const getSeverityColor = (severity: string | undefined): string => {
+  if (!severity) return "bg-gray-100 text-gray-800"; // default style
+
+  switch (severity.toLowerCase()) {
+    case "low":
+      return "bg-green-100 text-green-800";
+    case "moderate":
+      return "bg-yellow-100 text-yellow-800";
+    case "high":
+      return "bg-red-100 text-red-800";
+    default:
+      return "bg-gray-100 text-gray-800";
   }
+};
+
 
   return (
     <div className="space-y-6">
@@ -397,33 +400,32 @@ export default function UnifiedAnalysis() {
                     <p className="text-sm text-green-800">{analysisResult.visual_findings.condition_detected}</p>
                   </div>
 
-                  {analysisResult.visual_findings.visual_characteristics.length > 0 && (
-                    <div>
-                      <p className="font-medium text-green-900 mb-2">Visual Characteristics:</p>
-                      <ul className="text-sm text-green-800 space-y-1">
-                        {analysisResult.visual_findings.visual_characteristics.map((char, index) => (
-                          <li key={index} className="flex items-start gap-2">
-                            <CheckCircle className="w-3 h-3 text-green-600 mt-0.5 flex-shrink-0" />
-                            {char}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                  {Array.isArray(analysisResult.visual_findings?.visual_characteristics) &&
+  analysisResult.visual_findings.visual_characteristics.length > 0 && (
+    <div>
+      <p className="font-medium text-green-900 mb-2">Visual Characteristics:</p>
+      <ul className="text-sm text-green-800 space-y-1">
+        {analysisResult.visual_findings.visual_characteristics.map((item, idx) => (
+          <li key={idx}>• {item}</li>
+        ))}
+      </ul>
+    </div>
+                    )}
 
-                  {analysisResult.visual_findings.areas_of_concern.length > 0 && (
-                    <div>
-                      <p className="font-medium text-green-900 mb-2">Areas of Concern:</p>
-                      <ul className="text-sm text-green-800 space-y-1">
-                        {analysisResult.visual_findings.areas_of_concern.map((concern, index) => (
-                          <li key={index} className="flex items-start gap-2">
-                            <AlertCircle className="w-3 h-3 text-orange-600 mt-0.5 flex-shrink-0" />
-                            {concern}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+{Array.isArray(analysisResult.visual_findings?.areas_of_concern) &&
+  analysisResult.visual_findings.areas_of_concern.length > 0 && (
+    <div>
+      <p className="font-medium text-green-900 mb-2">Areas of Concern:</p>
+      <ul className="text-sm text-green-800 space-y-1">
+        {analysisResult.visual_findings.areas_of_concern.map((concern, index) => (
+          <li key={index} className="flex items-start gap-2">
+            <AlertCircle className="w-3 h-3 text-orange-600 mt-0.5 flex-shrink-0" />
+            {concern}
+          </li>
+        ))}
+      </ul>
+    </div>
+)}
                 </div>
               </div>
 
@@ -439,33 +441,36 @@ export default function UnifiedAnalysis() {
                     <p className="text-sm text-purple-800">{analysisResult.audio_analysis.symptom_description}</p>
                   </div>
 
-                  {analysisResult.audio_analysis.vocal_indicators.length > 0 && (
-                    <div>
-                      <p className="font-medium text-purple-900 mb-2">Vocal Indicators:</p>
-                      <ul className="text-sm text-purple-800 space-y-1">
-                        {analysisResult.audio_analysis.vocal_indicators.map((indicator, index) => (
-                          <li key={index} className="flex items-start gap-2">
-                            <Activity className="w-3 h-3 text-purple-600 mt-0.5 flex-shrink-0" />
-                            {indicator}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+{Array.isArray(analysisResult.audio_analysis?.vocal_indicators) &&
+  analysisResult.audio_analysis.vocal_indicators.length > 0 && (
+    <div>
+      <p className="font-medium text-purple-900 mb-2">Vocal Indicators:</p>
+      <ul className="text-sm text-purple-800 space-y-1">
+        {analysisResult.audio_analysis.vocal_indicators.map((indicator, index) => (
+          <li key={index} className="flex items-start gap-2">
+            <Activity className="w-3 h-3 text-purple-600 mt-0.5 flex-shrink-0" />
+            {indicator}
+          </li>
+        ))}
+      </ul>
+    </div>
+)}
 
-                  {analysisResult.audio_analysis.respiratory_patterns.length > 0 && (
-                    <div>
-                      <p className="font-medium text-purple-900 mb-2">Respiratory Patterns:</p>
-                      <ul className="text-sm text-purple-800 space-y-1">
-                        {analysisResult.audio_analysis.respiratory_patterns.map((pattern, index) => (
-                          <li key={index} className="flex items-start gap-2">
-                            <Activity className="w-3 h-3 text-purple-600 mt-0.5 flex-shrink-0" />
-                            {pattern}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+{Array.isArray(analysisResult.audio_analysis?.respiratory_patterns) &&
+  analysisResult.audio_analysis.respiratory_patterns.length > 0 && (
+    <div>
+      <p className="font-medium text-purple-900 mb-2">Respiratory Patterns:</p>
+      <ul className="text-sm text-purple-800 space-y-1">
+        {analysisResult.audio_analysis.respiratory_patterns.map((pattern, index) => (
+          <li key={index} className="flex items-start gap-2">
+            <Activity className="w-3 h-3 text-purple-600 mt-0.5 flex-shrink-0" />
+            {pattern}
+          </li>
+        ))}
+      </ul>
+    </div>
+)}
+
                 </div>
               </div>
             </div>
