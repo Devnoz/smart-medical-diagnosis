@@ -1,0 +1,27 @@
+# Environment variables
+.env
+.env.local
+.env*.local
+
+# Audio files
+*.mp3
+*.wav
+
+# Temporary files
+temp/
+uploads/
+__pycache__/
+
+# Python specific
+*.py[cod]
+*.egg-info
+*.log
+*.pot
+
+# IDE specific
+.vscode/
+.idea/
+
+# System files
+.DS_Store
+Thumbs.db
