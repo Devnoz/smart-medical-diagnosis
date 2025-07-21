@@ -1,20 +1,31 @@
-import asyncio
-import websockets
+import asyncio, websockets, json, time, io
+import os
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+AUDIO_PATH = os.path.join(ROOT, "app", "temp", "audio", "elevenlabs_testing.mp3")
+IMAGE_PATH = os.path.join(ROOT, "assets", "acne.jpg")
 
-async def simple_test():
-    try:
-        # Basic connection without extra parameters
-        async with websockets.connect('ws://127.0.0.1:8001/ws/diagnosis') as ws:
-            await ws.send(b'test')
-            response = await ws.recv()
-            print(f"Server response: {response}")
-    except Exception as e:
-        print(f"Connection failed: {type(e).__name__}: {str(e)}")
+AUDIO_PATH = r"C:/Users/MUHAMMAD USMAN/Desktop/POCs/ai-doctor/smart-medical-diagnosis/smart-medical-diagnosis/backend/app/temp/audio/elevenlabs_testing.mp3"
+IMAGE_PATH = r"C:/Users/MUHAMMAD USMAN/Desktop/POCs/ai-doctor\smart-medical-diagnosis\smart-medical-diagnosis/backend/assets/acne.jpg"               # or "some.jpg"
 
-# Old Python compatibility
-if hasattr(asyncio, 'run'):
-    asyncio.run(simple_test())
-else:
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(simple_test())
-    loop.close()
+async def test():
+    uri = "ws://localhost:8001/ws/diagnosis"
+    async with websockets.connect(uri) as ws:
+        # 1. Send audio
+        with open(AUDIO_PATH, "rb") as f:
+            await ws.send(f.read())
+        # 2. Optional image
+        if IMAGE_PATH:
+            with open(IMAGE_PATH, "rb") as f:
+                await ws.send(f.read())
+        else:
+            await ws.send(b'')   # empty bytes to trigger "no image"
+        # 3. Collect all TTS audio chunks
+        audio_out = io.BytesIO()
+        async for msg in ws:
+            if isinstance(msg, bytes):
+                audio_out.write(msg)
+            else:
+                print("Text feedback:", msg)
+        print("Received", audio_out.tell(), "bytes of TTS audio")
+
+asyncio.run(test())
