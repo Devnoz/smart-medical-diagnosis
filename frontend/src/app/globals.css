@@ -1,25 +1,53 @@
 @import "tailwindcss";
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300..700&display=swap");
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300..700&display=swap");
 
 @layer base {
   :root {
-    --bg: #f0f9ff;
-    --card-bg: rgba(255, 255, 255, 0.65);
-    --text: #0c4a6e;
+    --primary: #2563eb;
+    --primary-light: #60a5fa;
+    --accent: #0ea5e9;
+    --bg-main: #f8fafc;
+    --card-bg: rgba(255, 255, 255, 0.8);
+    --text-main: #0f172a;
+    --text-muted: #64748b;
   }
 
   body {
-    font-family: "Inter", sans-serif;
-    @apply bg-[--bg] text-[--text];
+    font-family: "Outfit", sans-serif;
+    @apply bg-[--bg-main] text-[--text-main] antialiased;
+    background-image: radial-gradient(#e2e8f0 0.5px, transparent 0.5px);
+    background-size: 24px 24px;
   }
 }
 
 @layer components {
-  .glass-card {
-    @apply bg-[--card-bg] backdrop-blur-md rounded-2xl shadow-lg border border-white/20;
+  .premium-card {
+    @apply bg-white/80 backdrop-blur-xl border border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.05)] rounded-[2rem];
+  }
+  
+  .glass-button {
+    @apply relative overflow-hidden transition-all duration-300 active:scale-95;
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-500 font-bold;
+  }
+
+  .nav-link {
+    @apply text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors relative;
+  }
+
+  .nav-link.active::after {
+    content: "";
+    @apply absolute -bottom-1 left-0 w-full h-0.5 bg-blue-600 rounded-full;
   }
 }
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

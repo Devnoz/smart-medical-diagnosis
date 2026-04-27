@@ -1,6 +1,7 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from fastapi.concurrency import run_in_threadpool
-from elevenlabs.client import ElevenLabs
+from gtts import gTTS
+from io import BytesIO
 from groq import Groq
 from dotenv import load_dotenv
 load_dotenv()
@@ -10,6 +11,7 @@ import asyncio
 import logging
 import base64
 from typing import Optional
+import json
 
 
 router = APIRouter()
@@ -18,15 +20,19 @@ router = APIRouter()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# System prompt for medical diagnosis
-SYSTEM_PROMPT = """You are a medical diagnosis assistant. Analyze the provided medical information 
-and give a professional diagnosis with recommended treatments. Be concise but thorough."""
+# System prompt for medical diagnosis (Dermatology focused)
+SYSTEM_PROMPT = """You are a highly skilled professional dermatologist. 
+Your tone is soft-spoken, empathetic, and extremely professional. 
+Analyze the provided skin images and symptoms to provide a detailed dermatological assessment. 
+Break down your response into clear sections: 
+1. Assessment (What you see)
+2. Potential Condition (Differential diagnosis)
+3. Recommended Actions (Next steps, treatments, or specialists to see)
+Be thorough yet clear."""
+
 
 # Initialize clients
-elevenlabs_client = ElevenLabs(
-    api_key=os.getenv("ELEVEN_API_KEY"),
-    timeout=30.0  # Increased timeout for API calls
-)
+# ElevenLabs removed in favor of gTTS
 
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
@@ -36,10 +42,21 @@ def encode_image(image_data: bytes) -> str:
 
 def transcribe_with_groq(audio_data: bytes, stt_model: str = "whisper-large-v3") -> str:
     """Transcribe audio using Groq"""
-    # Note: This is a placeholder implementation
-    # You would need to send the audio to a transcription service
-    # or use Groq's capabilities if they support audio input
-    return "[Audio transcription would appear here]"
+    try:
+        # Create a temporary file-like object for the audio data
+        audio_file = BytesIO(audio_data)
+        audio_file.name = "audio.wav"
+        
+        transcription = groq_client.audio.transcriptions.create(
+            file=audio_file,
+            model=stt_model,
+            response_format="text",
+        )
+        return transcription
+    except Exception as e:
+        logger.error(f"Transcription failed: {str(e)}")
+        return f"[Transcription failed: {str(e)}]"
+
 
 def analyze_image_with_query(
     query: str, 
@@ -119,7 +136,14 @@ async def websocket_diagnosis(websocket: WebSocket):
             logger.info("No image data received")
             pass
 
-        # 3. Process audio transcription
+        # 3. Consume the third message (text/dummy) from frontend to clear buffer
+        try:
+            await asyncio.wait_for(websocket.receive(), timeout=0.5)
+            logger.info("Consumed third message")
+        except:
+            pass
+
+        # 4. Process audio transcription
         try:
             transcription = await run_in_threadpool(
                 transcribe_with_groq,
@@ -156,32 +180,40 @@ async def websocket_diagnosis(websocket: WebSocket):
             await websocket.close(code=1011)
             return
 
-        # 5. Stream TTS response
+        # 5. Send text diagnosis to frontend
         try:
-            def _tts_generator():
-                # 11-Labs returns a generator of bytes
-                return elevenlabs_client.generate(
-                    text=diagnosis,
-                    voice="Rachel",
-                    model="eleven_multilingual_v2",
-                    stream=True
-                )
+            await websocket.send_text(json.dumps({
+                "type": "diagnosis",
+                "text": diagnosis
+            }))
+            logger.info("Sent text diagnosis")
+        except Exception as e:
+            logger.error(f"Failed to send text diagnosis: {str(e)}")
 
-            # Run the blocking generator in a thread-pool
-            tts_gen = await run_in_threadpool(_tts_generator)
+        # 6. Generate TTS response with gTTS
+        try:
+            def _generate_gtts():
+                # Using co.uk for a British accent which often sounds more professional/soft-spoken
+                tts = gTTS(text=diagnosis, lang='en', tld='co.uk')
+                audio_fp = BytesIO()
+                tts.write_to_fp(audio_fp)
+                return audio_fp.getvalue()
 
-            chunk_count = 0
-            for chunk in tts_gen:
-                if chunk:
-                    await websocket.send_bytes(chunk)
-                    chunk_count += 1
-
-            logger.info(f"Sent {chunk_count} audio chunks")
+            # Run blocking gTTS in threadpool
+            audio_bytes = await run_in_threadpool(_generate_gtts)
+            
+            if audio_bytes:
+                await websocket.send_bytes(audio_bytes)
+                logger.info(f"Sent gTTS audio ({len(audio_bytes)} bytes)")
 
         except Exception as e:
-            logger.error(f"TTS failed: {str(e)}")
-            await websocket.send_text("Error: Voice synthesis failed")
+            logger.error(f"gTTS failed: {str(e)}")
+            await websocket.send_text(json.dumps({"type": "error", "msg": "Voice synthesis failed"}))
             return
+            
+        # 7. Explicitly close connection
+        await websocket.close(code=1000)
+        logger.info("WebSocket explicitly closed")
 
     except WebSocketDisconnect as e:
         logger.info(f"Client disconnected: code={e.code}, reason={e.reason}")

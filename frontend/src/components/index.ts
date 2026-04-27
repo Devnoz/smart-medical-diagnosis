@@ -5,3 +5,5 @@ export * from './DiagnosisCard';
 export * from './PlayButton';
 export * from './Loader';
 export * from './ErrorAlert';
+export * from './Navbar';
+export * from './Footer';
